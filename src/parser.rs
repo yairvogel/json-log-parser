@@ -1,3 +1,5 @@
+use crate::log_entry::LogEntry;
+use serde_json::Value;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -13,6 +15,55 @@ pub fn extract_container_and_content(line: &str) -> (Option<String>, &str) {
     } else {
         (None, line)
     }
+}
+
+pub fn parse_log_content(content: &str) -> LogEntry {
+    let mut entry = LogEntry::new();
+
+    // Try to parse as JSON
+    if let Ok(value) = serde_json::from_str::<Value>(content) {
+        if let Value::Object(map) = value {
+            // Extract level (case-insensitive)
+            for key in &["level", "Level", "LEVEL", "lvl"] {
+                if let Some(Value::String(s)) = map.get(*key) {
+                    entry.level = Some(s.clone());
+                    break;
+                }
+            }
+
+            // Extract message (case-insensitive)
+            for key in &["message", "Message", "MESSAGE", "msg"] {
+                if let Some(Value::String(s)) = map.get(*key) {
+                    entry.message = Some(s.clone());
+                    break;
+                }
+            }
+
+            // Extract timestamp
+            for key in &["timestamp", "Timestamp", "time", "ts"] {
+                if let Some(Value::String(s)) = map.get(*key) {
+                    entry.timestamp = Some(s.clone());
+                    break;
+                }
+            }
+
+            // Store extra fields
+            for (k, v) in map.iter() {
+                let k_lower = k.to_lowercase();
+                if !["level", "message", "timestamp", "msg", "time", "ts", "lvl"].contains(&k_lower.as_str()) {
+                    entry.extra_fields.insert(k.clone(), v.clone());
+                }
+            }
+        } else {
+            // JSON but not an object - treat as plain text
+            entry.message = Some(content.to_string());
+        }
+    } else {
+        // Not valid JSON - treat as plain text
+        entry.message = Some(content.to_string());
+    }
+
+    entry
 }
 
 #[cfg(test)]
@@ -49,5 +100,46 @@ mod tests {
         let (container, content) = extract_container_and_content(line);
         assert_eq!(container, Some("worker-1".to_string()));
         assert_eq!(content, "");
+    }
+
+    #[test]
+    fn test_parse_json_all_fields() {
+        let json = r#"{"level":"INFO","message":"Server started","timestamp":"2024-01-30T10:00:00Z"}"#;
+        let entry = parse_log_content(json);
+        assert_eq!(entry.level, Some("INFO".to_string()));
+        assert_eq!(entry.message, Some("Server started".to_string()));
+        assert_eq!(entry.timestamp, Some("2024-01-30T10:00:00Z".to_string()));
+    }
+
+    #[test]
+    fn test_parse_json_missing_level() {
+        let json = r#"{"message":"Server started","timestamp":"2024-01-30T10:00:00Z"}"#;
+        let entry = parse_log_content(json);
+        assert_eq!(entry.level, None);
+        assert_eq!(entry.message, Some("Server started".to_string()));
+    }
+
+    #[test]
+    fn test_parse_json_case_insensitive() {
+        let json = r#"{"Level":"INFO","Message":"Test","msg":"Alt message"}"#;
+        let entry = parse_log_content(json);
+        // Should find Level (case insensitive)
+        assert_eq!(entry.level, Some("INFO".to_string()));
+    }
+
+    #[test]
+    fn test_parse_non_json() {
+        let text = "Plain text log message";
+        let entry = parse_log_content(text);
+        assert_eq!(entry.level, None);
+        assert_eq!(entry.message, Some("Plain text log message".to_string()));
+    }
+
+    #[test]
+    fn test_parse_json_array_fallback() {
+        let json = r#"[1, 2, 3]"#;
+        let entry = parse_log_content(json);
+        assert_eq!(entry.message, Some("[1, 2, 3]".to_string()));
+        assert_eq!(entry.level, None);
     }
 }
