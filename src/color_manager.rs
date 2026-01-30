@@ -26,7 +26,8 @@ impl ColorManager {
     }
 
     pub fn get_container_color(&mut self, container: &str) -> ColoredString {
-        let index = *self.container_to_index
+        let index = *self
+            .container_to_index
             .entry(container.to_string())
             .or_insert_with(|| {
                 let idx = self.next_index;
@@ -95,13 +96,13 @@ mod tests {
 
         assert_eq!(manager.get_level_color("error"), Color::BrightRed);
         assert_eq!(manager.get_level_color("ERROR"), Color::BrightRed); // Case insensitive
-        assert_eq!(manager.get_level_color("err"), Color::BrightRed);    // Alias
+        assert_eq!(manager.get_level_color("err"), Color::BrightRed); // Alias
         assert_eq!(manager.get_level_color("warn"), Color::Yellow);
-        assert_eq!(manager.get_level_color("warning"), Color::Yellow);   // Alias
+        assert_eq!(manager.get_level_color("warning"), Color::Yellow); // Alias
         assert_eq!(manager.get_level_color("info"), Color::Green);
         assert_eq!(manager.get_level_color("debug"), Color::Blue);
         assert_eq!(manager.get_level_color("trace"), Color::Cyan);
-        assert_eq!(manager.get_level_color("unknown"), Color::White);    // Default
+        assert_eq!(manager.get_level_color("unknown"), Color::White); // Default
     }
 
     #[test]

@@ -1,9 +1,10 @@
-use std::process::{Command, Stdio};
 use std::io::Write;
+use std::process::{Command, Stdio};
 
 #[test]
 fn test_basic_json_log() {
-    let input = r#"web-1 | {"level":"INFO","message":"Server started","timestamp":"2024-01-30T10:00:00Z"}"#;
+    let input =
+        r#"web-1 | {"level":"INFO","message":"Server started","timestamp":"2024-01-30T10:00:00Z"}"#;
 
     let mut child = Command::new("cargo")
         .args(&["run", "--quiet"])
@@ -14,7 +15,9 @@ fn test_basic_json_log() {
 
     {
         let stdin = child.stdin.as_mut().expect("Failed to open stdin");
-        stdin.write_all(input.as_bytes()).expect("Failed to write to stdin");
+        stdin
+            .write_all(input.as_bytes())
+            .expect("Failed to write to stdin");
     } // stdin is closed when it goes out of scope
 
     let output = child.wait_with_output().expect("Failed to read stdout");
@@ -38,7 +41,9 @@ fn test_plain_text_log() {
 
     {
         let stdin = child.stdin.as_mut().expect("Failed to open stdin");
-        stdin.write_all(input.as_bytes()).expect("Failed to write to stdin");
+        stdin
+            .write_all(input.as_bytes())
+            .expect("Failed to write to stdin");
     } // stdin is closed when it goes out of scope
 
     let output = child.wait_with_output().expect("Failed to read stdout");
@@ -61,7 +66,9 @@ fn test_no_container_line() {
 
     {
         let stdin = child.stdin.as_mut().expect("Failed to open stdin");
-        stdin.write_all(input.as_bytes()).expect("Failed to write to stdin");
+        stdin
+            .write_all(input.as_bytes())
+            .expect("Failed to write to stdin");
     } // stdin is closed when it goes out of scope
 
     let output = child.wait_with_output().expect("Failed to read stdout");
@@ -84,7 +91,9 @@ fn test_empty_json_object() {
 
     {
         let stdin = child.stdin.as_mut().expect("Failed to open stdin");
-        stdin.write_all(input.as_bytes()).expect("Failed to write to stdin");
+        stdin
+            .write_all(input.as_bytes())
+            .expect("Failed to write to stdin");
     } // stdin is closed when it goes out of scope
 
     let output = child.wait_with_output().expect("Failed to read stdout");
@@ -107,7 +116,9 @@ fn test_json_missing_fields() {
 
     {
         let stdin = child.stdin.as_mut().expect("Failed to open stdin");
-        stdin.write_all(input.as_bytes()).expect("Failed to write to stdin");
+        stdin
+            .write_all(input.as_bytes())
+            .expect("Failed to write to stdin");
     } // stdin is closed when it goes out of scope
 
     let output = child.wait_with_output().expect("Failed to read stdout");
@@ -130,7 +141,9 @@ fn test_multiple_containers_color_consistency() {
 
     {
         let stdin = child.stdin.as_mut().expect("Failed to open stdin");
-        stdin.write_all(input.as_bytes()).expect("Failed to write to stdin");
+        stdin
+            .write_all(input.as_bytes())
+            .expect("Failed to write to stdin");
     } // stdin is closed when it goes out of scope
 
     let output = child.wait_with_output().expect("Failed to read stdout");

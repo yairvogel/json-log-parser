@@ -1,5 +1,5 @@
-use crate::log_entry::LogEntry;
 use crate::color_manager::ColorManager;
+use crate::log_entry::LogEntry;
 use colored::*;
 
 pub trait LogFormat {
@@ -41,8 +41,8 @@ impl LogFormat for DefaultFormatter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::log_entry::LogEntry;
     use crate::color_manager::ColorManager;
+    use crate::log_entry::LogEntry;
 
     #[test]
     fn test_format_all_fields() {

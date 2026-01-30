@@ -1,12 +1,12 @@
 mod color_manager;
+mod formatter;
 mod log_entry;
 mod parser;
-mod formatter;
 
-use std::io::{self, BufRead};
 use color_manager::ColorManager;
-use formatter::{LogFormat, DefaultFormatter};
+use formatter::{DefaultFormatter, LogFormat};
 use parser::{extract_container_and_content, parse_log_content};
+use std::io::{self, BufRead};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let stdin = io::stdin();

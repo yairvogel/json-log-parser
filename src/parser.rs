@@ -1,11 +1,9 @@
 use crate::log_entry::LogEntry;
-use serde_json::Value;
 use once_cell::sync::Lazy;
 use regex::Regex;
+use serde_json::Value;
 
-static CONTAINER_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^([^\s]+)\s+\|\s+(.*)$").unwrap()
-});
+static CONTAINER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^([^\s]+)\s+\|\s+(.*)$").unwrap());
 
 pub fn extract_container_and_content(line: &str) -> (Option<String>, &str) {
     if let Some(captures) = CONTAINER_REGEX.captures(line) {
@@ -40,7 +38,17 @@ pub fn parse_log_content(content: &str) -> LogEntry {
             }
 
             // Extract timestamp
-            for key in &["timestamp", "Timestamp", "TIMESTAMP", "time", "Time", "ts", "Ts", "TS"] {
+            for key in &[
+                "timestamp",
+                "Timestamp",
+                "TIMESTAMP",
+                "time",
+                "Time",
+                "ts",
+                "Ts",
+                "TS",
+                "asctime",
+            ] {
                 if let Some(Value::String(s)) = map.get(*key) {
                     entry.timestamp = Some(s.clone());
                     break;
@@ -50,7 +58,9 @@ pub fn parse_log_content(content: &str) -> LogEntry {
             // Store extra fields
             for (k, v) in map.iter() {
                 let k_lower = k.to_lowercase();
-                if !["level", "message", "timestamp", "msg", "time", "ts", "lvl"].contains(&k_lower.as_str()) {
+                if !["level", "message", "timestamp", "msg", "time", "ts", "lvl"]
+                    .contains(&k_lower.as_str())
+                {
                     entry.extra_fields.insert(k.clone(), v.clone());
                 }
             }
@@ -104,7 +114,8 @@ mod tests {
 
     #[test]
     fn test_parse_json_all_fields() {
-        let json = r#"{"level":"INFO","message":"Server started","timestamp":"2024-01-30T10:00:00Z"}"#;
+        let json =
+            r#"{"level":"INFO","message":"Server started","timestamp":"2024-01-30T10:00:00Z"}"#;
         let entry = parse_log_content(json);
         assert_eq!(entry.level, Some("INFO".to_string()));
         assert_eq!(entry.message, Some("Server started".to_string()));
@@ -135,8 +146,14 @@ mod tests {
         let entry = parse_log_content(json);
         assert_eq!(entry.level, Some("INFO".to_string()));
         assert_eq!(entry.message, Some("Test".to_string()));
-        assert_eq!(entry.extra_fields.get("request_id"), Some(&serde_json::json!("abc123")));
-        assert_eq!(entry.extra_fields.get("user"), Some(&serde_json::json!("john")));
+        assert_eq!(
+            entry.extra_fields.get("request_id"),
+            Some(&serde_json::json!("abc123"))
+        );
+        assert_eq!(
+            entry.extra_fields.get("user"),
+            Some(&serde_json::json!("john"))
+        );
     }
 
     #[test]
