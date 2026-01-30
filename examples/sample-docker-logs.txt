@@ -1,0 +1,8 @@
+web-1 | {"level":"info","message":"Server listening on port 3000","timestamp":"2024-01-30T10:00:00Z"}
+db-1 | {"level":"info","message":"Database connection established","timestamp":"2024-01-30T10:00:01Z"}
+web-1 | {"level":"debug","message":"Processing request GET /api/users"}
+worker-1 | Starting background job processor
+db-1 | {"level":"warn","message":"Slow query detected","timestamp":"2024-01-30T10:00:05Z","query":"SELECT * FROM large_table"}
+web-1 | {"level":"error","message":"Failed to connect to cache","timestamp":"2024-01-30T10:00:10Z"}
+Attaching to web-1, db-1, worker-1
+web-1 | Server started successfully
