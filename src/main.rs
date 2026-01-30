@@ -1,16 +1,17 @@
 mod color_manager;
+mod format_context;
 mod formatter;
 mod log_entry;
 mod parser;
 
-use color_manager::ColorManager;
+use format_context::FormatContext;
 use formatter::{DefaultFormatter, LogFormat};
 use parser::{extract_container_and_content, parse_log_content};
 use std::io::{self, BufRead};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let stdin = io::stdin();
-    let mut colors = ColorManager::new();
+    let mut format_context = FormatContext::new();
     let formatter = DefaultFormatter;
 
     for line in stdin.lock().lines() {
@@ -24,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         entry.container = container;
 
         // Format and print
-        let output = formatter.format(&entry, &mut colors);
+        let output = formatter.format(&entry, &mut format_context);
         println!("{}", output);
     }
 

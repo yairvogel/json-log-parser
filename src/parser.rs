@@ -22,7 +22,7 @@ pub fn parse_log_content(content: &str) -> LogEntry {
     if let Ok(value) = serde_json::from_str::<Value>(content) {
         if let Value::Object(map) = value {
             // Extract level (case-insensitive)
-            for key in &["level", "Level", "LEVEL", "lvl"] {
+            for key in &["level", "Level", "LEVEL", "lvl", "levelname"] {
                 if let Some(Value::String(s)) = map.get(*key) {
                     entry.level = Some(s.clone());
                     break;

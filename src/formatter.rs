@@ -1,21 +1,25 @@
-use crate::color_manager::ColorManager;
+use crate::format_context::FormatContext;
 use crate::log_entry::LogEntry;
 use colored::*;
 
 pub trait LogFormat {
-    fn format(&self, entry: &LogEntry, colors: &mut ColorManager) -> String;
+    fn format(&self, entry: &LogEntry, context: &mut FormatContext) -> String;
 }
 
 pub struct DefaultFormatter;
 
 impl LogFormat for DefaultFormatter {
-    fn format(&self, entry: &LogEntry, colors: &mut ColorManager) -> String {
+    fn format(&self, entry: &LogEntry, context: &mut FormatContext) -> String {
         let mut parts = Vec::new();
 
         // Add container if present
         if let Some(ref container) = entry.container {
-            let colored_container = colors.get_container_color(container);
-            parts.push(format!("[{}]", colored_container));
+            let colored_container = context.get_container_color(container);
+            parts.push(format!(
+                "[{:width$}]",
+                colored_container,
+                width = context.indent()
+            ));
         }
 
         // Add timestamp if present
@@ -25,7 +29,7 @@ impl LogFormat for DefaultFormatter {
 
         // Add level if present (colored)
         if let Some(ref level) = entry.level {
-            let level_color = colors.get_level_color(level);
+            let level_color = context.get_level_color(level);
             parts.push(format!("{}:", level.color(level_color)));
         }
 
