@@ -1,9 +1,12 @@
+use once_cell::sync::Lazy;
 use regex::Regex;
 
-pub fn extract_container_and_content(line: &str) -> (Option<String>, &str) {
-    let re = Regex::new(r"^([^\s]+)\s+\|\s+(.*)$").unwrap();
+static CONTAINER_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^([^\s]+)\s+\|\s+(.*)$").unwrap()
+});
 
-    if let Some(captures) = re.captures(line) {
+pub fn extract_container_and_content(line: &str) -> (Option<String>, &str) {
+    if let Some(captures) = CONTAINER_REGEX.captures(line) {
         let container = captures.get(1).map(|m| m.as_str().to_string());
         let content = captures.get(2).map(|m| m.as_str()).unwrap_or("");
         (container, content)
