@@ -40,7 +40,7 @@ pub fn parse_log_content(content: &str) -> LogEntry {
             }
 
             // Extract timestamp
-            for key in &["timestamp", "Timestamp", "time", "ts"] {
+            for key in &["timestamp", "Timestamp", "TIMESTAMP", "time", "Time", "ts", "Ts", "TS"] {
                 if let Some(Value::String(s)) = map.get(*key) {
                     entry.timestamp = Some(s.clone());
                     break;
@@ -121,10 +121,31 @@ mod tests {
 
     #[test]
     fn test_parse_json_case_insensitive() {
-        let json = r#"{"Level":"INFO","Message":"Test","msg":"Alt message"}"#;
+        let json = r#"{"Level":"INFO","Message":"Test"}"#;
         let entry = parse_log_content(json);
         // Should find Level (case insensitive)
         assert_eq!(entry.level, Some("INFO".to_string()));
+        // Should find Message (case insensitive)
+        assert_eq!(entry.message, Some("Test".to_string()));
+    }
+
+    #[test]
+    fn test_parse_json_extra_fields() {
+        let json = r#"{"level":"INFO","message":"Test","request_id":"abc123","user":"john"}"#;
+        let entry = parse_log_content(json);
+        assert_eq!(entry.level, Some("INFO".to_string()));
+        assert_eq!(entry.message, Some("Test".to_string()));
+        assert_eq!(entry.extra_fields.get("request_id"), Some(&serde_json::json!("abc123")));
+        assert_eq!(entry.extra_fields.get("user"), Some(&serde_json::json!("john")));
+    }
+
+    #[test]
+    fn test_parse_json_field_aliases() {
+        let json1 = r#"{"lvl":"ERROR","msg":"Failed","ts":"2024-01-30T10:00:00Z"}"#;
+        let entry1 = parse_log_content(json1);
+        assert_eq!(entry1.level, Some("ERROR".to_string()));
+        assert_eq!(entry1.message, Some("Failed".to_string()));
+        assert_eq!(entry1.timestamp, Some("2024-01-30T10:00:00Z".to_string()));
     }
 
     #[test]
