@@ -4,12 +4,20 @@ mod formatter;
 mod log_entry;
 mod parser;
 
+use clap::Parser;
 use format_context::FormatContext;
 use formatter::{DefaultFormatter, LogFormat};
 use parser::{extract_container_and_content, parse_log_content};
 use std::io::{self, BufRead};
 
+#[derive(Debug, Parser)]
+struct Args {
+    #[arg(short, long)]
+    kubectl_deployment: bool,
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let args = Args::parse();
     let stdin = io::stdin();
     let mut format_context = FormatContext::new();
     let formatter = DefaultFormatter;
@@ -18,7 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let line = line?;
 
         // Extract container and content
-        let (container, content) = extract_container_and_content(&line);
+        let (container, content) = extract_container_and_content(&line, args.kubectl_deployment);
 
         // Parse content (JSON or plain text)
         let mut entry = parse_log_content(content);

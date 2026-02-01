@@ -45,7 +45,6 @@ impl LogFormat for DefaultFormatter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::color_manager::ColorManager;
     use crate::log_entry::LogEntry;
 
     #[test]
@@ -57,8 +56,8 @@ mod tests {
         entry.message = Some("Server started".to_string());
 
         let formatter = DefaultFormatter;
-        let mut colors = ColorManager::new();
-        let output = formatter.format(&entry, &mut colors);
+        let mut context = FormatContext::new();
+        let output = formatter.format(&entry, &mut context);
 
         // Output should contain all components
         assert!(output.contains("web-1"));
@@ -75,8 +74,8 @@ mod tests {
         entry.message = Some("Server started".to_string());
 
         let formatter = DefaultFormatter;
-        let mut colors = ColorManager::new();
-        let output = formatter.format(&entry, &mut colors);
+        let mut context = FormatContext::new();
+        let output = formatter.format(&entry, &mut context);
 
         assert!(output.contains("web-1"));
         assert!(output.contains("INFO"));
@@ -90,8 +89,8 @@ mod tests {
         entry.message = Some("Warning message".to_string());
 
         let formatter = DefaultFormatter;
-        let mut colors = ColorManager::new();
-        let output = formatter.format(&entry, &mut colors);
+        let mut context = FormatContext::new();
+        let output = formatter.format(&entry, &mut context);
 
         // Should not have brackets
         assert!(!output.starts_with("["));
@@ -106,8 +105,8 @@ mod tests {
         entry.message = Some("Plain log line".to_string());
 
         let formatter = DefaultFormatter;
-        let mut colors = ColorManager::new();
-        let output = formatter.format(&entry, &mut colors);
+        let mut context = FormatContext::new();
+        let output = formatter.format(&entry, &mut context);
 
         assert!(output.contains("worker-1"));
         assert!(output.contains("Plain log line"));

@@ -4,9 +4,19 @@ use regex::Regex;
 use serde_json::Value;
 
 static CONTAINER_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^([^\s]+)\s+\|\s+(.*)$").unwrap());
+static KUBECTL_DEPLOYMENT_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^\[([^\s]+)\]\s+(.*)$").unwrap());
 
-pub fn extract_container_and_content(line: &str) -> (Option<String>, &str) {
-    if let Some(captures) = CONTAINER_REGEX.captures(line) {
+pub fn extract_container_and_content(
+    line: &str,
+    kubectl_deployment: bool,
+) -> (Option<String>, &str) {
+    let captures = if kubectl_deployment {
+        KUBECTL_DEPLOYMENT_REGEX.captures(line)
+    } else {
+        CONTAINER_REGEX.captures(line)
+    };
+    if let Some(captures) = captures {
         let container = captures.get(1).map(|m| m.as_str().to_string());
         let content = captures.get(2).map(|m| m.as_str()).unwrap_or("");
         (container, content)
@@ -83,7 +93,15 @@ mod tests {
     #[test]
     fn test_extract_valid_container_line() {
         let line = "web-1 | Server started";
-        let (container, content) = extract_container_and_content(line);
+        let (container, content) = extract_container_and_content(line, false);
+        assert_eq!(container, Some("web-1".to_string()));
+        assert_eq!(content, "Server started");
+    }
+
+    #[test]
+    fn test_extract_valid_kubectl_deployment_line() {
+        let line = "[web-1] Server started";
+        let (container, content) = extract_container_and_content(line, true);
         assert_eq!(container, Some("web-1".to_string()));
         assert_eq!(content, "Server started");
     }
@@ -91,7 +109,7 @@ mod tests {
     #[test]
     fn test_extract_no_container() {
         let line = "Just a regular log line";
-        let (container, content) = extract_container_and_content(line);
+        let (container, content) = extract_container_and_content(line, false);
         assert_eq!(container, None);
         assert_eq!(content, "Just a regular log line");
     }
@@ -99,7 +117,7 @@ mod tests {
     #[test]
     fn test_extract_with_extra_pipes() {
         let line = "db-1 | SELECT * FROM users | WHERE id=1";
-        let (container, content) = extract_container_and_content(line);
+        let (container, content) = extract_container_and_content(line, false);
         assert_eq!(container, Some("db-1".to_string()));
         assert_eq!(content, "SELECT * FROM users | WHERE id=1");
     }
@@ -107,7 +125,7 @@ mod tests {
     #[test]
     fn test_extract_empty_content() {
         let line = "worker-1 | ";
-        let (container, content) = extract_container_and_content(line);
+        let (container, content) = extract_container_and_content(line, false);
         assert_eq!(container, Some("worker-1".to_string()));
         assert_eq!(content, "");
     }
