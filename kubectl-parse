@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+NAMESPACE=
+CONTEXT=
+NAME=
+RESOURCE_NAME=
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --resource-name)
+            RESOURCE_NAME=$2
+            shift
+            shift
+            ;;
+        --name)
+            NAME=$2
+            shift
+            shift
+            ;;
+        --context)
+            CONTEXT=$2
+            shift
+            shift
+            ;;
+        --namespace)
+            NAMESPACE=$2
+            shift
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+if [ -z $NAME ]; then
+    >2 echo "missing name argument"
+    exit 1
+fi
+
+args=("-f")
+if [ -n $RESOURCE_NAME ]; then
+    args+=("$RESOURCE_NAME/$NAME")
+else
+    args+=("$NAME")
+fi
+
+if [ -n $NAMESPACE ]; then
+    args+=("-n" "$NAMESPACE")
+fi
+
+if [ -n $CONTEXT ]; then
+    args+=("--context" "$CONTEXT")
+fi
+
+if [ $RESOURCE_NAME == "deployments" ]; then
+    KUBECTL_DEPLOYMENT_FLAG="--kubectl-deployment"
+    KUBECTL_ALL_PODS="--all-pods"
+fi
+
+kubectl logs "${args[@]}" "$KUBECTL_ALL_PODS" | ~/repos/json-log-decoder/target/release/json-log-decoder --container-name "$NAME" "$KUBECTL_DEPLOYMENT_FLAG"
