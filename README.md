@@ -1,4 +1,4 @@
-# JSON Log Decoder
+# JSON Log Parser
 
 A CLI tool for parsing and formatting Docker Compose log streams with colored output.
 

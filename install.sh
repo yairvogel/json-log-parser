@@ -9,16 +9,16 @@ if ! command -v cargo >/dev/null 2>&1; then
 fi
 
 
-git clone --depth 1 https://github.com/yairvogel/json-log-decoder
+git clone --depth 1 https://github.com/yairvogel/json-log-parser
 
-pushd json-log-decoder
+pushd json-log-parser
 
 cargo b --release
 
 EXEC_DIR="~/.local/bin"
 mkdir -p $EXEC_DIR
 
-cp target/release/json-log-decoder $EXEC_DIR
+cp target/release/json-log-parser $EXEC_DIR
 cp kubectl-parse $EXEC_DIR
 
 if command -v k9s >/dev/null 2>&1; then
@@ -35,4 +35,4 @@ echo "using $EXEC_DIR as executables directory. make sure it is in your PATH"
 
 popd
 
-rm -rf json-log-decoder
+rm -rf json-log-parser
