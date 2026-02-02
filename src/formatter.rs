@@ -6,14 +6,26 @@ pub trait LogFormat {
     fn format(&self, entry: &LogEntry, context: &mut FormatContext) -> String;
 }
 
-pub struct DefaultFormatter;
+pub struct DefaultFormatter(Option<String>);
+
+impl DefaultFormatter {
+    pub fn new(default_container: Option<String>) -> Self {
+        Self(default_container)
+    }
+}
+
+impl Default for DefaultFormatter {
+    fn default() -> Self {
+        Self(None)
+    }
+}
 
 impl LogFormat for DefaultFormatter {
     fn format(&self, entry: &LogEntry, context: &mut FormatContext) -> String {
         let mut parts = Vec::new();
 
         // Add container if present
-        if let Some(ref container) = entry.container {
+        if let Some(ref container) = entry.container.as_ref().or(self.0.as_ref()) {
             let colored_container = context.get_container_color(container);
             parts.push(format!(
                 "[{:width$}]",
@@ -55,7 +67,7 @@ mod tests {
         entry.level = Some("INFO".to_string());
         entry.message = Some("Server started".to_string());
 
-        let formatter = DefaultFormatter;
+        let formatter = DefaultFormatter::default();
         let mut context = FormatContext::new();
         let output = formatter.format(&entry, &mut context);
 
@@ -73,7 +85,7 @@ mod tests {
         entry.level = Some("INFO".to_string());
         entry.message = Some("Server started".to_string());
 
-        let formatter = DefaultFormatter;
+        let formatter = DefaultFormatter::default();
         let mut context = FormatContext::new();
         let output = formatter.format(&entry, &mut context);
 
@@ -88,7 +100,7 @@ mod tests {
         entry.level = Some("WARN".to_string());
         entry.message = Some("Warning message".to_string());
 
-        let formatter = DefaultFormatter;
+        let formatter = DefaultFormatter::default();
         let mut context = FormatContext::new();
         let output = formatter.format(&entry, &mut context);
 
@@ -104,11 +116,25 @@ mod tests {
         entry.container = Some("worker-1".to_string());
         entry.message = Some("Plain log line".to_string());
 
-        let formatter = DefaultFormatter;
+        let formatter = DefaultFormatter::default();
         let mut context = FormatContext::new();
         let output = formatter.format(&entry, &mut context);
 
         assert!(output.contains("worker-1"));
+        assert!(output.contains("Plain log line"));
+    }
+
+    #[test]
+    fn test_default_container_name() {
+        let mut entry = LogEntry::new();
+        entry.container = None;
+        entry.message = Some("Plain log line".to_string());
+
+        let formatter = DefaultFormatter(Some("default-container".to_string()));
+        let mut context = FormatContext::new();
+        let output = formatter.format(&entry, &mut context);
+
+        assert!(output.contains("default-container"));
         assert!(output.contains("Plain log line"));
     }
 }

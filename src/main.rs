@@ -10,9 +10,12 @@ use formatter::{DefaultFormatter, LogFormat};
 use parser::{extract_container_and_content, parse_log_content};
 use std::io::{self, BufRead};
 
-#[derive(Debug, Parser)]
+#[derive(Parser, Debug)]
 struct Args {
-    #[arg(short, long)]
+    #[arg(long)]
+    container_name: Option<String>,
+
+    #[arg(long)]
     kubectl_deployment: bool,
 }
 
@@ -20,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     let stdin = io::stdin();
     let mut format_context = FormatContext::new();
-    let formatter = DefaultFormatter;
+    let formatter = DefaultFormatter::new(args.container_name);
 
     for line in stdin.lock().lines() {
         let line = line?;
