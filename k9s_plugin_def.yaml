@@ -1,0 +1,17 @@
+  debug:
+    shortCut: Shift-H
+    description: Debug
+    scopes:
+    - deployment
+    - po
+    command: kubectl-parse
+    background: false
+    args:
+    - --name
+    - $NAME
+    - --resource-name
+    - $RESOURCE_NAME
+    - --context
+    - $CONTEXT
+    - --namespace
+    - $NAMESPACE
