@@ -53,9 +53,11 @@ if [ -n $CONTEXT ]; then
     args+=("--context" "$CONTEXT")
 fi
 
+jld_args=("--container-name" "$NAME")
+
 if [ $RESOURCE_NAME == "deployments" ]; then
-    KUBECTL_DEPLOYMENT_FLAG="--kubectl-deployment"
+    jld_args+=("--kubectl-deployment")
     KUBECTL_ALL_PODS="--all-pods"
 fi
 
-kubectl logs "${args[@]}" "$KUBECTL_ALL_PODS" | ~/repos/json-log-decoder/target/release/json-log-decoder --container-name "$NAME" "$KUBECTL_DEPLOYMENT_FLAG"
+kubectl logs "${args[@]}" "$KUBECTL_ALL_PODS" | json-log-parser "${jld_args[@]}"
