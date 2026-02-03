@@ -2,47 +2,6 @@
 
 A CLI tool for parsing and formatting Docker Compose log streams with colored output.
 
-## Features
-
-- Extracts container names from Docker Compose log format
-- Parses JSON logs and displays structured information
-- Color-codes containers (consistent colors per container)
-- Color-codes log levels (ERROR=red, WARN=yellow, INFO=green, etc.)
-- Gracefully handles plain text logs
-- Streams efficiently from stdin
-
-## Installation
-
-```bash
-cargo build --release
-```
-
-## Usage
-
-Pipe Docker Compose logs directly:
-
-```bash
-docker compose logs -f | cargo run
-```
-
-Or use with a log file:
-
-```bash
-cat docker-logs.txt | cargo run
-```
-
-## Output Format
-
-For JSON logs:
-```
-[container-name] timestamp LEVEL: message
-```
-
-For plain text logs:
-```
-[container-name] plain text content
-```
-
 ## Example
 
 Input:
@@ -55,18 +14,16 @@ Output (with colors):
 [web-1] 2024-01-30T10:00:00Z INFO: Server started
 ```
 
-## Development
+## Use as a K9S plugin
 
-Run tests:
-```bash
-cargo test
+### Automatic Install:
+```
+curl -fsSL https://github.com/yairvogel/json-log-parser/raw/refs/heads/master/install.sh | bash
 ```
 
-Run with sample logs:
-```bash
-cat examples/sample-docker-logs.txt | cargo run
-```
+- download a binary from the releases or build from source. Place your binary in your PATH.
+- download kubectl-parse script, make it executable and in your PATH as well
+- run `(read -r _ PLUGIN_PATH < <(k9s info | grep Plugins); echo $PLUGIN_PATH)`
+- copy the contents of k9s_plugin_def.yaml in the file you got from the previous command
+- on a deployment or a pod view, press <shift-h> to view formatted logs
 
-## License
-
-MIT
