@@ -24,7 +24,9 @@ if command -v k9s >/dev/null 2>&1; then
     if [[ ! -f "$K9S_PLUGIN_PATH" ]]; then
         echo 'plugins:' > "$K9S_PLUGIN_PATH"
     fi
-    cat k9s_plugin_def.yaml >> "$K9S_PLUGIN_PATH"
+    if ! grep '^  debug:$' >/dev/null "$K9S_PLUGIN_PATH"; then
+        cat k9s_plugin_def.yaml >> "$K9S_PLUGIN_PATH"
+    fi
 else
     echo "could not find k9s installation. skipping plugin installation"
 fi
