@@ -26,7 +26,7 @@ pub fn extract_container_and_content(
 }
 
 pub fn parse_log_content(content: &str) -> LogEntry {
-    let mut entry = LogEntry::new();
+    let mut entry = LogEntry::default();
 
     // Try to parse as JSON
     if let Ok(value) = serde_json::from_str::<Value>(content) {

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -x
+
 if ! command -v cargo >/dev/null 2>&1; then
     >&2 echo "cargo is required for installation"
     >&2 echo "install using brew install cargo"
@@ -13,7 +15,7 @@ pushd json-log-parser
 
 cargo b --release
 
-EXEC_DIR="~/.local/bin"
+EXEC_DIR="$HOME/.local/bin"
 mkdir -p $EXEC_DIR
 
 cp target/release/json-log-parser $EXEC_DIR

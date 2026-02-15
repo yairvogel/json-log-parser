@@ -1,25 +1,13 @@
 use serde_json::Value;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct LogEntry {
     pub container: Option<String>,
     pub timestamp: Option<String>,
     pub level: Option<String>,
     pub message: Option<String>,
     pub extra_fields: HashMap<String, Value>,
-}
-
-impl LogEntry {
-    pub fn new() -> Self {
-        Self {
-            container: None,
-            timestamp: None,
-            level: None,
-            message: None,
-            extra_fields: HashMap::new(),
-        }
-    }
 }
 
 #[cfg(test)]

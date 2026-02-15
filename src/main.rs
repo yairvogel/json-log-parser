@@ -17,13 +17,16 @@ struct Args {
 
     #[arg(long)]
     kubectl_deployment: bool,
+
+    #[arg(long)]
+    format: Option<String>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     let stdin = io::stdin();
     let mut format_context = FormatContext::new();
-    let formatter = DefaultFormatter::new(args.container_name);
+    let formatter = DefaultFormatter::new(args.format, args.container_name);
 
     for line in stdin.lock().lines() {
         let line = line?;
