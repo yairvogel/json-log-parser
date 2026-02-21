@@ -1,12 +1,11 @@
 use std::borrow::Cow;
-use std::io::Write;
+use std::io::{self, Write};
 
 use crate::format_context::FormatContext;
 use crate::log_entry::LogEntry;
 use colored::*;
-use serde_json::Value;
 
-const DEFAULT_FORMAT: &str = ".message";
+const DEFAULT_FORMAT: &str = "{.message}";
 
 pub trait LogFormat {
     fn format(&self, entry: &LogEntry, context: &mut FormatContext) -> String;
@@ -38,28 +37,33 @@ impl Default for DefaultFormatter {
     }
 }
 
+fn write_into<T: io::Write>(mut writer: T, prop: &Option<String>) -> io::Result<()> {
+    let val = prop.as_deref().unwrap_or_default();
+    write!(writer, "{val}")
+}
+
 fn write_property(log_line: &mut Vec<u8>, part: &str, entry: &LogEntry) -> std::io::Result<()> {
-    if part.starts_with(".") {
-        let property = &part[1..];
-        let value = match property {
-            "message" => entry.message.as_deref().unwrap_or_default(),
-            "timestamp" => entry.timestamp.as_deref().unwrap_or_default(),
-            "level" => entry.level.as_deref().unwrap_or_default(),
-            "container" => entry.message.as_deref().unwrap_or_default(),
-            _ => {
-                let owned = entry
-                    .extra_fields
-                    .get(property)
-                    .map(|v| v.to_string())
-                    .unwrap_or_default();
-                write!(log_line, "{owned}")?;
-                ""
-            }
-        };
-        write!(log_line, "{value}")?;
-    } else {
+    if !part.starts_with("{.") || !part.ends_with("}") {
         write!(log_line, "{part}")?;
+        return Ok(());
     }
+
+    let len = part.len();
+    let property = &part[2..len - 1];
+    match property {
+        "message" => write_into(log_line, &entry.message),
+        "timestamp" => write_into(log_line, &entry.timestamp),
+        "level" => write_into(log_line, &entry.level),
+        "container" => write_into(log_line, &entry.container),
+        _ => {
+            let extra = entry
+                .extra_fields
+                .get(property)
+                .map(|v| v.to_string())
+                .unwrap_or_default();
+            write!(log_line, "{extra}")
+        }
+    }?;
     Ok(())
 }
 
@@ -68,7 +72,7 @@ impl LogFormat for DefaultFormatter {
         let mut log_line: Vec<u8> = vec![];
 
         // Add container if present
-        if let Some(ref container) = entry.container.as_ref().or(self.default_container.as_ref()) {
+        if let Some(container) = entry.container.as_ref().or(self.default_container.as_ref()) {
             let colored_container = context.get_container_color(container);
             write!(
                 &mut log_line,
@@ -109,13 +113,18 @@ mod tests {
     use super::*;
     use crate::log_entry::LogEntry;
 
+    macro_rules! t_str {
+        ( $x:expr ) => {
+            Some(String::from($x))
+        };
+    }
     #[test]
     fn test_format_all_fields() {
         let mut entry = LogEntry::default();
-        entry.container = Some("web-1".to_string());
-        entry.timestamp = Some("2024-01-30T10:00:00Z".to_string());
-        entry.level = Some("INFO".to_string());
-        entry.message = Some("Server started".to_string());
+        entry.container = t_str!("web-1");
+        entry.timestamp = t_str!("2024-01-30T10:00:00Z");
+        entry.level = t_str!("INFO");
+        entry.message = t_str!("Server started");
 
         let formatter = DefaultFormatter::default();
         let mut context = FormatContext::new();
@@ -131,9 +140,9 @@ mod tests {
     #[test]
     fn test_format_missing_timestamp() {
         let mut entry = LogEntry::default();
-        entry.container = Some("web-1".to_string());
-        entry.level = Some("INFO".to_string());
-        entry.message = Some("Server started".to_string());
+        entry.container = t_str!("web-1");
+        entry.level = t_str!("INFO");
+        entry.message = t_str!("Server started");
 
         let formatter = DefaultFormatter::default();
         let mut context = FormatContext::new();
@@ -147,8 +156,8 @@ mod tests {
     #[test]
     fn test_format_no_container() {
         let mut entry = LogEntry::default();
-        entry.level = Some("WARN".to_string());
-        entry.message = Some("Warning message".to_string());
+        entry.level = t_str!("WARN");
+        entry.message = t_str!("Warning message");
 
         let formatter = DefaultFormatter::default();
         let mut context = FormatContext::new();
@@ -163,8 +172,8 @@ mod tests {
     #[test]
     fn test_format_plain_text() {
         let mut entry = LogEntry::default();
-        entry.container = Some("worker-1".to_string());
-        entry.message = Some("Plain log line".to_string());
+        entry.container = t_str!("worker-1");
+        entry.message = t_str!("Plain log line");
 
         let formatter = DefaultFormatter::default();
         let mut context = FormatContext::new();
@@ -178,9 +187,9 @@ mod tests {
     fn test_default_container_name() {
         let mut entry = LogEntry::default();
         entry.container = None;
-        entry.message = Some("Plain log line".to_string());
+        entry.message = t_str!("Plain log line");
 
-        let formatter = DefaultFormatter::new(None, Some("default-container".to_string()));
+        let formatter = DefaultFormatter::new(None, t_str!("default-container"));
         let mut context = FormatContext::new();
         let output = formatter.format(&entry, &mut context);
 
@@ -191,11 +200,11 @@ mod tests {
     #[test]
     fn test_format() {
         let mut entry = LogEntry::default();
-        entry.message = Some("message".to_string());
+        entry.message = t_str!("message");
         entry.extra_fields =
             HashMap::from([("extra".to_string(), Value::String("hello".to_string()))]);
 
-        let format = String::from(".extra");
+        let format = String::from("{.extra}");
         let formatter = DefaultFormatter::new(Some(format), None);
         let mut context = FormatContext::new();
 

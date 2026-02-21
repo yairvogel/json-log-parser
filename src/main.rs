@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Parse content (JSON or plain text)
         let mut entry = parse_log_content(content);
-        entry.container = container;
+        entry.container = container.map(String::from);
 
         // Format and print
         let output = formatter.format(&entry, &mut format_context);
