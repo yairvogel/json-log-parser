@@ -4,6 +4,7 @@
     scopes:
     - deployment
     - po
+    - service
     command: kubectl-parse
     background: false
     args:
