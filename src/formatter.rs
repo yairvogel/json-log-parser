@@ -4,8 +4,9 @@ use std::io::{self, Write};
 use crate::format_context::FormatContext;
 use crate::log_entry::LogEntry;
 use colored::*;
+use serde_json::Value;
 
-const DEFAULT_FORMAT: &str = "{.message}";
+const DEFAULT_FORMAT: &str = "{.message} {.exc_info}";
 
 pub trait LogFormat {
     fn format(&self, entry: &LogEntry, context: &mut FormatContext) -> String;
@@ -37,8 +38,8 @@ impl Default for DefaultFormatter {
     }
 }
 
-fn write_into<T: io::Write>(mut writer: T, prop: &Option<String>) -> io::Result<()> {
-    let val = prop.as_deref().unwrap_or_default();
+fn write_into<T: io::Write>(mut writer: T, prop: Option<&str>) -> io::Result<()> {
+    let val = prop.unwrap_or("");
     write!(writer, "{val}")
 }
 
@@ -51,16 +52,22 @@ fn write_property(log_line: &mut Vec<u8>, part: &str, entry: &LogEntry) -> std::
     let len = part.len();
     let property = &part[2..len - 1];
     match property {
-        "message" => write_into(log_line, &entry.message),
-        "timestamp" => write_into(log_line, &entry.timestamp),
-        "level" => write_into(log_line, &entry.level),
-        "container" => write_into(log_line, &entry.container),
+        "message" => write_into(log_line, entry.message.as_ref().map(String::as_str)),
+        "timestamp" => write_into(log_line, entry.timestamp.as_ref().map(String::as_str)),
+        "level" => write_into(log_line, entry.level.as_ref().map(String::as_str)),
+        "container" => write_into(log_line, entry.container.as_ref().map(String::as_str)),
         _ => {
             let extra = entry
                 .extra_fields
                 .get(property)
-                .map(|v| v.to_string())
-                .unwrap_or_default();
+                .map(|v| {
+                    if let Value::String(s) = v {
+                        s.to_owned()
+                    } else {
+                        v.to_string()
+                    }
+                })
+                .unwrap_or(String::new());
             write!(log_line, "{extra}")
         }
     }?;
